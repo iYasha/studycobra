@@ -1,3 +1,4 @@
+from core.celery_app import celery_app
 from core.database import database
 from fastapi import APIRouter
 from fastapi import status
@@ -12,8 +13,14 @@ router = APIRouter()
 @router.get("/readiness", response_class=PlainTextResponse)
 def readiness() -> str:
     """ Простейший эндпоинт для проверки работоспособности сервиса """
-
     return "Ok"
+
+
+@router.get("/celery", response_class=PlainTextResponse)
+def readiness() -> str:
+    """ Простейший эндпоинт для проверки работоспособности Celery Worker """
+    task = celery_app.send_task('test_celery', args=['hello'], queue="main-queue", routing_key='main-queue')
+    return str(task)
 
 
 @router.get("/check_database", response_class=PlainTextResponse)

@@ -36,3 +36,7 @@ class ValidationError(BaseError):
         field_errors: Optional[List[Union[FieldError, FieldErrorModel]]] = None,
     ) -> None:
         super().__init__(message, code, field_errors)
+
+
+class NotFoundError(ValidationError):
+    DEFAULT_MESSAGE = "Запись не найдена"

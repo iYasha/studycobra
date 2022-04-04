@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.9
 
 WORKDIR /src/
 
@@ -9,7 +9,7 @@ RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-
     poetry config virtualenvs.create false
 
 # Copy poetry.lock* in case it doesn't exist in the repo
-COPY ./src/pyproject.toml ./src/poetry.lock* /src/
+COPY pyproject.toml ./src/poetry.lock* /src/
 
 # Allow installing dev dependencies to run tests
 ARG INSTALL_DEV=false

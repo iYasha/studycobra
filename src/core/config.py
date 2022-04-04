@@ -30,8 +30,9 @@ class EnvSettings(BaseSettings):
     """
 
     # Main settings
-    PROJECT_NAME: str = "Fastapi default"  # TODO: изменить название сервиса
+    PROJECT_NAME: str = "Fastapi default"
     ENVIRONMENT: Optional[Environment] = None
+    FULL_DOMAIN: Optional[str] = None
     RELEASE: Optional[str] = None
     API_V1_STR: str = "/api/v1"
     URL_SUBPATH: str = ""
@@ -41,16 +42,17 @@ class EnvSettings(BaseSettings):
     PROJECT_ROOT: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     BASE_DIR: str = os.path.dirname(os.path.abspath(__file__))
     TESTING: bool = False
+    SECRET_KEY: str = ''
 
     # Database settings
-    DB_USER: str = "postgres"
-    DB_PASSWORD: str = "postgres"
-    DB_HOST: str = "localhost"
-    DB_PORT: int = 5432
-    DB_NAME: str = "app"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_HOST: str = "localhost"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_DB: str = "app"
     DB_URI: Optional[PostgresDsn] = None
 
-    @validator("DB_NAME", pre=True)
+    @validator("POSTGRES_DB", pre=True)
     def get_actual_db_name(cls, v: str, values: Dict[str, Any]) -> str:
         test_postfix = "_test"
 
@@ -65,13 +67,13 @@ class EnvSettings(BaseSettings):
         if isinstance(v, str):
             return v
 
-        path = values.get("DB_NAME", "")
+        path = values.get("POSTGRES_DB", "")
         return PostgresDsn.build(
             scheme="postgresql",
-            user=values.get("DB_USER"),
-            password=values.get("DB_PASSWORD"),
-            host=values.get("DB_HOST"),
-            port=str(values.get("DB_PORT")),
+            user=values.get("POSTGRES_USER"),
+            password=values.get("POSTGRES_PASSWORD"),
+            host=values.get("POSTGRES_HOST"),
+            port=str(values.get("POSTGRES_PORT")),
             path=f"/{path}",
         )
 
@@ -83,7 +85,15 @@ class EnvSettings(BaseSettings):
     RABBIT_VHOST: str = ""
     RABBIT_URL: Optional[str] = None
 
-    @validator("RABBIT_URL", pre=True)
+    # Celery settings
+    CELERY_BROKER_URL: Optional[str] = None
+    CELERY_TIMEZONE = "Europe/Kiev"
+    CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+    CELERY_TASK_SERIALIZER = "json"
+    CELERYD_MAX_TASKS_PER_CHILD: int = 1
+
+
+    @validator("RABBIT_URL", 'CELERY_BROKER_URL', pre=True)
     def assemble_celery_broker_url(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
         if isinstance(v, str):
             return v
@@ -99,9 +109,11 @@ class EnvSettings(BaseSettings):
     # Основные сервисы системы
 
     # SSO settings
-    SSO_AUTH_JWT_KEY: str = ""
+    SSO_AUTH_JWT_KEY: str = "test"
     SSO_AUTH_JWT_VERIFY_SIGNATURE: bool = False
-    SSO_AUTH_JWT_ALGORITHMS: Union[List[str], str] = ["RS256"]
+    SSO_AUTH_JWT_ALGORITHMS: Union[List[str], str] = ["HS256"]
+    SSO_ACCESS_TOKEN_EXPIRE_MINUTES: int = 48 * 60
+    SSO_REFRESH_TOKEN_EXPIRE_MINUTES: int = 30 * 24 * 60
 
     @validator("SSO_AUTH_JWT_ALGORITHMS", pre=True)
     def validate_algoritms(cls, v: Union[str, List[str]]) -> List[str]:

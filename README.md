@@ -49,8 +49,8 @@ Teaching is one of my hobbies, I'm teaching a lot of students, who have never le
 ## Roadmap
 
 - [ ] Add Changelog
-- [ ] Add base template
-- [ ] Add SSO service 
+- [x] Add base template
+- [x] Add SSO service 
 - [ ] Add Quiz service
 - [ ] Add task service
 - [ ] Add Auto-check system.

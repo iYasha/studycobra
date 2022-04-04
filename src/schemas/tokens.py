@@ -1,0 +1,31 @@
+from datetime import datetime
+from typing import Optional
+from uuid import UUID
+
+from pydantic import BaseModel
+
+import enums
+from schemas.users import UserInToken
+
+
+class BaseToken(BaseModel):
+	iat: datetime
+	exp: datetime
+	sub: str
+	token_type: enums.TokenType
+
+	class Config:
+		validate_assignment = True
+		use_enum_values = True
+
+
+class AccessToken(BaseToken):
+	token_type: enums.TokenType = enums.TokenType.ACCESS
+	token: Optional[str] = None
+	user: UserInToken
+	session_id: Optional[UUID] = None
+
+
+class RefreshToken(BaseToken):
+	token_type: enums.TokenType = enums.TokenType.REFRESH
+	token: Optional[str] = None

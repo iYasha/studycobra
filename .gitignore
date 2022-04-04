@@ -114,10 +114,12 @@ venv.bak/
 shared/
 static/
 imports/
-media/
+#media/
 
 # temporary ignore files for formatter, linters
 setup.cfg
 
 # test cache
 .pytest_cache
+
+database/

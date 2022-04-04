@@ -1,11 +1,7 @@
-from raven import Client
-
-from src.core.celery_app import celery_app
-from src.core.config import settings
-
-client_sentry = Client(settings.SENTRY_DSN)
+from core.celery_app import celery_app
 
 
-@celery_app.task(acks_late=True)
+@celery_app.task(name='test_celery', acks_late=True)
 def test_celery(word: str) -> str:
+    print(f"test task return {word}")
     return f"test task return {word}"
