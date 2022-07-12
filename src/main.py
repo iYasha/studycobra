@@ -1,10 +1,11 @@
 from logging import config as logging_config
 
 import uvicorn
+from tortoise.contrib.fastapi import register_tortoise
+
 from api.routes import api_router
 from core.config import Settings
 from core.config import settings
-from core.database import database
 from core.logging_conf import LOGGING
 from core.sentry import init_sentry
 from fastapi.params import Security
@@ -52,20 +53,23 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_headers=["*"],
     )
 
-
-@SSOAuthConfig.load_config
-def get_config() -> Settings:
-    return settings
+register_tortoise(
+    app,
+    db_url=settings.DB_URI,
+    modules={"models": ["src.models.sessions", "src.models.users", "aerich.models"]},
+    generate_schemas=True,
+    add_exception_handlers=True,
+)
 
 
 @app.on_event("startup")
 async def startup() -> None:
-    await database.connect()
+    pass
 
 
 @app.on_event("shutdown")
 async def shutdown() -> None:
-    await database.disconnect()
+    pass
 
 
 if __name__ == "__main__":

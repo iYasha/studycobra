@@ -1,5 +1,4 @@
 from core.celery_app import celery_app
-from core.database import database
 from fastapi import APIRouter
 from fastapi import status
 from fastapi.responses import JSONResponse
@@ -23,13 +22,13 @@ def readiness() -> str:
     return str(task)
 
 
-@router.get("/check_database", response_class=PlainTextResponse)
-async def check_database() -> str:
-    """ Эндпоинт для проверки коннекта к БД """
-
-    query = "SELECT 1"
-    result = await database.execute(query)
-    return str(result)
+# @router.get("/check_database", response_class=PlainTextResponse)
+# async def check_database() -> str:
+#     """ Эндпоинт для проверки коннекта к БД """
+#
+#     query = "SELECT 1"
+#     result = await database.execute(query)
+#     return str(result)
 
 
 @router.get("/sentry_debug")

@@ -69,7 +69,7 @@ class EnvSettings(BaseSettings):
 
         path = values.get("POSTGRES_DB", "")
         return PostgresDsn.build(
-            scheme="postgresql",
+            scheme="postgres",
             user=values.get("POSTGRES_USER"),
             password=values.get("POSTGRES_PASSWORD"),
             host=values.get("POSTGRES_HOST"),

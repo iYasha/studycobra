@@ -3,7 +3,6 @@ from typing import NamedTuple
 from typing import Optional
 
 from fastapi.exceptions import RequestValidationError
-from sso_auth.exceptions import SSOBaseAuthException
 from pydantic import BaseModel
 from sentry_sdk import capture_exception
 from starlette import status

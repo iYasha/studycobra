@@ -7,20 +7,20 @@ import aiofiles
 import psutil
 from aio_pika import RobustConnection
 from core.config import settings
-from core.database import database
+# from core.database import database
 
 SUCCESS_STATUS = "working"
 DISK_USAGE_MAX = 90  # percentage
 MEMORY_MIN = 100  # Mb
 
 
-async def check_database() -> str:
-    query = "SELECT 1"
-    try:
-        await database.execute(query)
-    except Exception as e:
-        return str(e)
-    return SUCCESS_STATUS
+# async def check_database() -> str:
+#     query = "SELECT 1"
+#     try:
+#         await database.execute(query)
+#     except Exception as e:
+#         return str(e)
+#     return SUCCESS_STATUS
 
 
 async def check_rabbitmq() -> str:

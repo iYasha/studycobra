@@ -1,26 +1,25 @@
-import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID
+from tortoise import fields
 import uuid
 
 
 class UUIDModelMixin:
-	id = sa.Column(UUID, primary_key=True, default=uuid.uuid4)
+	uuid = fields.UUIDField(pk=True, default=uuid.uuid4)
 
 
 class SoftDeleteModelMixin:
-	is_deleted = sa.Column(sa.Boolean(), default=False)
+	is_deleted = fields.DatetimeField(null=True)
 
 
 class AuditMixin:
-	created_at = sa.Column(sa.DateTime(timezone=True), default=sa.func.now())
-	updated_at = sa.Column(sa.DateTime(timezone=True), onupdate=sa.func.now())
+	created_at = fields.DatetimeField(auto_now_add=True)
+	updated_at = fields.DatetimeField(null=True, auto_now=True)
 
 
 class TrackingMixin:
-	ip_address = sa.Column(sa.String, nullable=True)
-	user_agent = sa.Column(sa.String, nullable=True)
+	ip_address = fields.CharField(max_length=20, null=True)
+	user_agent = fields.CharField(max_length=255, null=True)
 
 
 class ExpireMixin:
-	start_at = sa.Column(sa.DateTime(timezone=True))
-	end_at = sa.Column(sa.DateTime(timezone=True))
+	start_at = fields.DatetimeField(null=False)
+	end_at = fields.DatetimeField(null=False)

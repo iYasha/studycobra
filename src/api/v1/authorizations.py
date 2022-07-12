@@ -3,6 +3,7 @@ from typing import List, Union
 from uuid import UUID
 
 from starlette.responses import Response
+from tortoise.transactions import atomic
 
 import enums
 from core import security
@@ -10,11 +11,10 @@ from core.config import settings
 from fastapi import APIRouter, Depends, Body, HTTPException
 from fastapi import status
 
-from core.database import database
 from exceptions import ValidationError
 from exceptions.schemas import ExceptionModel
 import schemas
-import crud
+import models
 from sdk.exceptions import FieldError
 from api import deps
 
@@ -28,7 +28,7 @@ async def create_session(user: Union[schemas.User, schemas.UserInDB], platform: 
             minutes=settings.SSO_ACCESS_TOKEN_EXPIRE_MINUTES
         )
     )
-
+    session = await models.Session.create(user_id=)
     session = await crud.SessionCRUD.create(
         schemas.SessionCreate(
             user_id=user.id,
@@ -61,7 +61,7 @@ async def create_session(user: Union[schemas.User, schemas.UserInDB], platform: 
         },
     },
 )
-@database.transaction()
+@atomic()
 async def register(
         *,
         tracking_params: schemas.TrackingSchemaMixin = Depends(deps.get_tracking_data),
@@ -69,9 +69,11 @@ async def register(
 ) -> schemas.SessionOut:
     """Регистрация с помощью почты и пароля"""
 
-    is_user_exists = await crud.UserCRUD.get_by_email(sign_up.email)
+    is_user_exists = await models.User.exists(email=sign_up.email)
     if is_user_exists:
-        raise ValidationError(field_errors=[FieldError(field='email', message='Пользователь с таким email уже существует')])
+        raise ValidationError(
+            field_errors=[FieldError(field='email', message='Пользователь с таким email уже существует')]
+        )
 
     create_user = schemas.UserInDB(
         **sign_up.dict()
@@ -80,8 +82,9 @@ async def register(
     if sign_up.password is not None:
         create_user.hashed_password = security.get_password_hash(sign_up.password)
 
-    user = await crud.UserCRUD.create(create_user)
-    return await create_session(user, sign_up.platform, tracking_params)
+    user = await models.User.create(**create_user.dict(exclude_unset=True))
+    session = await create_session(user, sign_up.platform, tracking_params)
+    return session
 
 
 @router.post(
@@ -98,7 +101,6 @@ async def register(
         },
     },
 )
-@database.transaction()
 async def login(
         *,
         tracking_params: schemas.TrackingSchemaMixin = Depends(deps.get_tracking_data),
@@ -111,15 +113,22 @@ async def login(
                     FieldError(field='password', message='Пароль неправильный')
                 ]
     )
+    transaction = await database.transaction()
 
-    user = await crud.UserCRUD.get_by_email(sign_in.email)
-    if not user:
-        raise user_not_found_or_password_incorrect
-    is_verified = security.verify_password(sign_in.password, user.hashed_password)
-    if not is_verified:
-        raise user_not_found_or_password_incorrect
+    try:
+        user = await crud.UserCRUD.get_by_email(sign_in.email)
+        if not user:
+            raise user_not_found_or_password_incorrect
+        is_verified = security.verify_password(sign_in.password, user.hashed_password)
+        if not is_verified:
+            raise user_not_found_or_password_incorrect
 
-    return await create_session(user, sign_in.platform, tracking_params)
+        session = await create_session(user, sign_in.platform, tracking_params)
+        transaction.commit()
+        return session
+    except Exception as e:
+        await transaction.rollback()
+        raise e
 
 
 @router.post(
@@ -132,25 +141,32 @@ async def login(
         },
     },
 )
-@database.transaction()
 async def refresh_access_token(
     *,
     tracking_params: schemas.TrackingSchemaMixin = Depends(deps.get_tracking_data),
     access_token: schemas.AccessToken = Depends(deps.get_access_token_without_verify),
     refresh_token: schemas.RefreshAccessToken,
 ) -> schemas.SessionOut:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail='Could not validate credentials',
-        headers={'WWW-Authenticate': 'Bearer'},
-    )
-    old_session = await crud.SessionCRUD.get_by_tokens(access_token=access_token.token, refresh_token=refresh_token.refresh_token)
-    if old_session is None:
-        raise credentials_exception
-    user = await crud.UserCRUD.get_by_id(old_session.user_id)
-    session = await create_session(user, old_session.platform, tracking_params)
-    await crud.SessionCRUD.destroy(obj_id=old_session.id)
-    return session
+    transaction = await database.transaction()
+    try:
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Could not validate credentials',
+            headers={'WWW-Authenticate': 'Bearer'},
+        )
+        old_session = await crud.SessionCRUD.get_by_tokens(
+            access_token=access_token.token, refresh_token=refresh_token.refresh_token
+        )
+        if old_session is None:
+            raise credentials_exception
+        user = await crud.UserCRUD.get_by_id(old_session.user_id)
+        session = await create_session(user, old_session.platform, tracking_params)
+        await crud.SessionCRUD.destroy(obj_id=old_session.id)
+        transaction.commit()
+        return session
+    except Exception as e:
+        await transaction.rollback()
+        raise e
 
 
 @router.delete(
