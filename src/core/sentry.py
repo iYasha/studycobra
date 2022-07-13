@@ -1,7 +1,6 @@
 import sentry_sdk
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from sentry_sdk.integrations.logging import LoggingIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 from core.config import settings
 
@@ -12,7 +11,7 @@ def init_sentry(app):
         environment=settings.ENVIRONMENT,
         release=settings.RELEASE,
         debug=settings.SENTRY_DEBUG,
-        integrations=[LoggingIntegration(event_level=None), SqlalchemyIntegration()],
+        integrations=[LoggingIntegration(event_level=None)],
         request_bodies=settings.SENTRY_REQUEST_BODIES,
     )
     app.add_middleware(SentryAsgiMiddleware)

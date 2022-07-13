@@ -9,7 +9,7 @@ from core.config import settings
 from core.logging_conf import LOGGING
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+# from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 
 logging_config.dictConfig(LOGGING)

@@ -8,8 +8,9 @@ from starlette.responses import Response
 from structlog.contextvars import bind_contextvars
 from structlog.contextvars import clear_contextvars
 
-from . import logger
-from .helpers import get_sso_user_params
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_request_header(request: Request, header_key: str) -> Any:
@@ -24,7 +25,9 @@ async def log_request_body_dependency(request: Request) -> None:
     if "multipart/form-data" in request.headers.get("content-type", ""):
         bind_contextvars(request_payload=None)
     else:
-        bind_contextvars(request_payload=await request.body() or None)
+        d = await request.body()
+        data = bind_contextvars(request_payload=d or None)
+        print(data)
 
 
 async def log_request_middleware(request: Request, call_next: Callable) -> Response:
@@ -40,8 +43,6 @@ async def log_request_middleware(request: Request, call_next: Callable) -> Respo
     url = str(request.url)
     user_agent = get_request_header(request, "user-agent")
 
-    sso_user_params = get_sso_user_params(getattr(request, "user", None))
-
     bind_contextvars(
         ip=ip,
         method=method,
@@ -49,11 +50,9 @@ async def log_request_middleware(request: Request, call_next: Callable) -> Respo
         url=url,
         request_id=request_id,
         request_payload=None,  # Проставится позже как из Dependency в роуте
-        **sso_user_params,
     )
     logger.info(
-        "request_started",
-        user_agent=user_agent,
+        f"request_started agent: {user_agent} ip: {ip} method: {method} {path} {url} {request_id}"
     )
 
     request.request_id = request_id  # type: ignore
@@ -63,9 +62,14 @@ async def log_request_middleware(request: Request, call_next: Callable) -> Respo
     code = response.status_code
     response_time = time.monotonic() - start_time
     logger.info(
-        "request_finished",
-        code=code,
-        response_time=response_time,
+        f"request_finished {code} {response_time} agent: {user_agent} ip: {ip} method: {method} {path} {url} {request_id}"
     )
 
+    return response
+
+
+async def set_response_time_to_header(request: Request, call_next: Callable) -> Response:
+    start_time = time.monotonic()
+    response = await call_next(request)
+    response.headers["X-Response-Time"] = str(time.monotonic() - start_time)
     return response

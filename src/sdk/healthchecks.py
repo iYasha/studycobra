@@ -6,21 +6,23 @@ import aio_pika
 import aiofiles
 import psutil
 from aio_pika import RobustConnection
+from tortoise.transactions import in_transaction
+
 from core.config import settings
-# from core.database import database
 
 SUCCESS_STATUS = "working"
 DISK_USAGE_MAX = 90  # percentage
 MEMORY_MIN = 100  # Mb
 
 
-# async def check_database() -> str:
-#     query = "SELECT 1"
-#     try:
-#         await database.execute(query)
-#     except Exception as e:
-#         return str(e)
-#     return SUCCESS_STATUS
+async def check_database() -> str:
+    query = "SELECT 1"
+    try:
+        async with in_transaction() as tconn:
+            await tconn.execute_query(query)
+    except Exception as e:
+        return str(e)
+    return SUCCESS_STATUS
 
 
 async def check_rabbitmq() -> str:

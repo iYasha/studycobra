@@ -92,7 +92,6 @@ class EnvSettings(BaseSettings):
     CELERY_TASK_SERIALIZER = "json"
     CELERYD_MAX_TASKS_PER_CHILD: int = 1
 
-
     @validator("RABBIT_URL", 'CELERY_BROKER_URL', pre=True)
     def assemble_celery_broker_url(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
         if isinstance(v, str):

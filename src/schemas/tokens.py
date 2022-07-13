@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 import enums
-from schemas.users import UserInToken
+from schemas.users import UserBase
 
 
 class BaseToken(BaseModel):
@@ -22,7 +22,7 @@ class BaseToken(BaseModel):
 class AccessToken(BaseToken):
 	token_type: enums.TokenType = enums.TokenType.ACCESS
 	token: Optional[str] = None
-	user: UserInToken
+	user: UserBase
 	session_id: Optional[UUID] = None
 
 

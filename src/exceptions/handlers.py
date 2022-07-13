@@ -12,7 +12,7 @@ from exceptions.schemas import ExceptionModel
 from exceptions.schemas import FieldErrorModel
 from exceptions.translation import PydanticErrorTranslator
 from exceptions.translation import pattern_translator_groupings
-from sso_auth.exceptions import SSOBaseAuthException
+# from sso_auth.exceptions import SSOBaseAuthException
 
 tr = PydanticErrorTranslator(
     error_translations=load_error_translations(),
@@ -86,11 +86,11 @@ def not_found_exception_handler(request: Request, exc: Exception) -> JSONRespons
     return JSONResponse(content.dict(), status_code=404)
 
 
-def auth_exception_handler(request: Request, exc: SSOBaseAuthException) -> JSONResponse:
-    """Обработчик ошибок аутентификации"""
-    service_code = request.app.service_code
-    content = ExceptionModel(error_message=exc.detail, service_code=service_code)
-    return JSONResponse(content.dict(), status_code=exc.status_code)
+# def auth_exception_handler(request: Request, exc: SSOBaseAuthException) -> JSONResponse:
+#     """Обработчик ошибок аутентификации"""
+#     service_code = request.app.service_code
+#     content = ExceptionModel(error_message=exc.detail, service_code=service_code)
+#     return JSONResponse(content.dict(), status_code=exc.status_code)
 
 
 def unexpected_exception_handler(request: Request, exc: Exception) -> JSONResponse:

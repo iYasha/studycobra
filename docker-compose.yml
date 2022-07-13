@@ -129,6 +129,35 @@ services:
       args:
         INSTALL_DEV: ${INSTALL_DEV-false}
 
+  elasticsearch:
+    image: "docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.3"
+    container_name: elasticsearch
+    environment:
+      #- "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "discovery.type=single-node"
+    volumes:
+      - ./elasticsearch:/usr/share/elasticsearch/data
+
+  kibana:
+    image: "docker.elastic.co/kibana/kibana-oss:7.9.3"
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS:http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    build:
+      context: ./filebeat
+    container_name: filebeat
+    volumes:
+      - ./filebeat-logs:/src/logs
+    depends_on:
+      - elasticsearch
+      - kibana
+
 networks:
   traefik-public:
     # Allow setting it to false for testing

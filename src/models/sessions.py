@@ -9,8 +9,8 @@ class Session(
 ):
     """ Модель сессии пользователя """
 
-    access_token = fields.CharField(max_length=255, null=True)
-    refresh_token = fields.CharField(max_length=255, null=True)
+    access_token = fields.TextField(null=True)
+    refresh_token = fields.TextField(null=True)
     platform = fields.CharField(max_length=20)
 
     user = fields.ForeignKeyField('models.User', related_name='sessions')

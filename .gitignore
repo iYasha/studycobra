@@ -124,3 +124,7 @@ setup.cfg
 .pytest_cache
 
 database/
+
+# ELK
+elasticsearch/
+filebeat-logs/
