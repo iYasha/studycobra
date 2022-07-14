@@ -2,6 +2,7 @@ import sys
 import logging
 from logging import handlers
 import structlog
+from core.config import settings
 
 LOGGING = {
     "version": 1,
@@ -43,7 +44,7 @@ def setup_root_logger():
 
     # configure rotating file handler
     file = handlers.RotatingFileHandler(
-        filename="logs/elk-logs.log", mode='a',
+        filename=f"{settings.LOG_DIR}/elk-logs.log", mode='a',
         maxBytes=15000000, backupCount=5
     )
     file.setFormatter(formatter)

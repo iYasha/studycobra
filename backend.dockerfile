@@ -10,6 +10,7 @@ RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-
 
 # Copy poetry.lock* in case it doesn't exist in the repo
 COPY pyproject.toml poetry.lock /src/
+COPY logstash/logs /src/logs
 
 # Allow installing dev dependencies to run tests
 ARG INSTALL_DEV=false

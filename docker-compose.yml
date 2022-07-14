@@ -88,58 +88,59 @@ services:
     #
     # You also have to change the flower command
 
-  backend:
-    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
-    depends_on:
-      - db
-    env_file:
-      - .env
-    environment:
-      - SERVER_NAME=${DOMAIN?Variable not set}
-      - SERVER_HOST=https://${DOMAIN?Variable not set}
-      # Allow explicit env var override for tests
-      - SMTP_HOST=${SMTP_HOST}
-    build:
-      context: .
-      dockerfile: backend.dockerfile
-      args:
-        INSTALL_DEV: ${INSTALL_DEV-false}
-    deploy:
-      labels:
-        - traefik.enable=true
-        - traefik.constraint-label-stack=${TRAEFIK_TAG?Variable not set}
-        - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.rule=PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`)
-        - traefik.http.services.${STACK_NAME?Variable not set}-backend.loadbalancer.server.port=80
-
-  celeryworker:
-    image: '${DOCKER_IMAGE_CELERYWORKER?Variable not set}:${TAG-latest}'
-    depends_on:
-      - db
-      - queue
-    env_file:
-      - .env
-    environment:
-      - SERVER_NAME=${DOMAIN?Variable not set}
-      - SERVER_HOST=https://${DOMAIN?Variable not set}
-      # Allow explicit env var override for tests
-      - SMTP_HOST=${SMTP_HOST?Variable not set}
-    build:
-      context: .
-      dockerfile: celeryworker.dockerfile
-      args:
-        INSTALL_DEV: ${INSTALL_DEV-false}
+#  backend:
+#    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+#    depends_on:
+#      - db
+#    env_file:
+#      - .env
+#    environment:
+#      - SERVER_NAME=${DOMAIN?Variable not set}
+#      - SERVER_HOST=https://${DOMAIN?Variable not set}
+#      # Allow explicit env var override for tests
+#      - SMTP_HOST=${SMTP_HOST}
+#    build:
+#      context: .
+#      dockerfile: backend.dockerfile
+#      args:
+#        INSTALL_DEV: ${INSTALL_DEV-false}
+#    deploy:
+#      labels:
+#        - traefik.enable=true
+#        - traefik.constraint-label-stack=${TRAEFIK_TAG?Variable not set}
+#        - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.rule=PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`)
+#        - traefik.http.services.${STACK_NAME?Variable not set}-backend.loadbalancer.server.port=80
+#
+#  celeryworker:
+#    image: '${DOCKER_IMAGE_CELERYWORKER?Variable not set}:${TAG-latest}'
+#    depends_on:
+#      - db
+#      - queue
+#    env_file:
+#      - .env
+#    environment:
+#      - SERVER_NAME=${DOMAIN?Variable not set}
+#      - SERVER_HOST=https://${DOMAIN?Variable not set}
+#      # Allow explicit env var override for tests
+#      - SMTP_HOST=${SMTP_HOST?Variable not set}
+#    build:
+#      context: .
+#      dockerfile: celeryworker.dockerfile
+#      args:
+#        INSTALL_DEV: ${INSTALL_DEV-false}
 
   elasticsearch:
-    image: "docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.3"
+    image: "docker.elastic.co/elasticsearch/elasticsearch:8.3.2"
     container_name: elasticsearch
     environment:
       #- "ES_JAVA_OPTS=-Xms1g -Xmx1g"
       - "discovery.type=single-node"
+      - "xpack.security.enabled=false"
     volumes:
       - ./elasticsearch:/usr/share/elasticsearch/data
 
   kibana:
-    image: "docker.elastic.co/kibana/kibana-oss:7.9.3"
+    image: "docker.elastic.co/kibana/kibana:8.3.2"
     container_name: kibana
     ports:
       - "5601:5601"
@@ -148,12 +149,13 @@ services:
     depends_on:
       - elasticsearch
 
-  filebeat:
-    build:
-      context: ./filebeat
-    container_name: filebeat
+  logstash:
+    image: "docker.elastic.co/logstash/logstash:8.3.2"
+    container_name: logstash
     volumes:
-      - ./filebeat-logs:/src/logs
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro,Z
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro,Z
+      - ./logstash/logs:/tmp/logs:rw
     depends_on:
       - elasticsearch
       - kibana

@@ -105,6 +105,15 @@ class EnvSettings(BaseSettings):
             values.get("RABBIT_VHOST"),
         )
 
+    # Logging
+    LOG_DIR: str = 'logs'
+
+    @validator("LOG_DIR", pre=True)
+    def remove_final_slash_from_dir(cls, v: Optional[str], values: Dict[str, Any]) -> str:
+        if v is None:
+            raise ValueError("LOG_DIR is not defined")
+        return v.rstrip('/')
+
     # Основные сервисы системы
 
     # SSO settings
