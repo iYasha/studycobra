@@ -3,6 +3,7 @@ from typing import List, Union
 from uuid import UUID
 
 from starlette.responses import Response
+from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import atomic
 
 import enums
@@ -62,105 +63,101 @@ async def register(
     return session
 
 
-# @router.post(
-#     '/login',
-#     response_model=schemas.SessionOut,
-#     responses={
-#         status.HTTP_400_BAD_REQUEST: {
-#             'description': 'Validation Error',
-#             'model': ExceptionModel,
-#         },
-#         status.HTTP_500_INTERNAL_SERVER_ERROR: {
-#             'description': 'Server Error',
-#             'model': ExceptionModel,
-#         },
-#     },
-# )
-# async def login(
-#         *,
-#         tracking_params: schemas.TrackingSchemaMixin = Depends(deps.get_tracking_data),
-#         sign_in: schemas.LogIn
-# ) -> schemas.SessionOut:
-#     """Вход с помощью почты и пароля или Apple Token"""
-#     user_not_found_or_password_incorrect = ValidationError(
-#                 field_errors=[
-#                     FieldError(field='email', message='Пользователь с таким email не существует'),
-#                     FieldError(field='password', message='Пароль неправильный')
-#                 ]
-#     )
-#     transaction = await database.transaction()
-#
-#     try:
-#         user = await crud.UserCRUD.get_by_email(sign_in.email)
-#         if not user:
-#             raise user_not_found_or_password_incorrect
-#         is_verified = security.verify_password(sign_in.password, user.hashed_password)
-#         if not is_verified:
-#             raise user_not_found_or_password_incorrect
-#
-#         session = await create_session(user, sign_in.platform, tracking_params)
-#         transaction.commit()
-#         return session
-#     except Exception as e:
-#         await transaction.rollback()
-#         raise e
-#
-#
-# @router.post(
-#     '/refresh-token',
-#     response_model=schemas.SessionOut,
-#     responses={
-#         status.HTTP_404_NOT_FOUND: {
-#             'description': 'Token invalid or expired.',
-#             'model': ExceptionModel,
-#         },
-#     },
-# )
-# async def refresh_access_token(
-#     *,
-#     tracking_params: schemas.TrackingSchemaMixin = Depends(deps.get_tracking_data),
-#     access_token: schemas.AccessToken = Depends(deps.get_access_token_without_verify),
-#     refresh_token: schemas.RefreshAccessToken,
-# ) -> schemas.SessionOut:
-#     transaction = await database.transaction()
-#     try:
-#         credentials_exception = HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail='Could not validate credentials',
-#             headers={'WWW-Authenticate': 'Bearer'},
-#         )
-#         old_session = await crud.SessionCRUD.get_by_tokens(
-#             access_token=access_token.token, refresh_token=refresh_token.refresh_token
-#         )
-#         if old_session is None:
-#             raise credentials_exception
-#         user = await crud.UserCRUD.get_by_id(old_session.user_id)
-#         session = await create_session(user, old_session.platform, tracking_params)
-#         await crud.SessionCRUD.destroy(obj_id=old_session.id)
-#         transaction.commit()
-#         return session
-#     except Exception as e:
-#         await transaction.rollback()
-#         raise e
-#
-#
-# @router.delete(
-#     '/logout',
-#     status_code=status.HTTP_204_NO_CONTENT,
-#     responses={
-#         status.HTTP_204_NO_CONTENT: {},
-#         status.HTTP_404_NOT_FOUND: {
-#             'description': 'Token invalid or expired.',
-#             'model': ExceptionModel,
-#         },
-#     },
-# )
-# async def logout(
-#     *,
-#     access_token: schemas.AccessToken = Depends(deps.get_access_token),
-# ) -> Response:
-#     await crud.SessionCRUD.destroy(obj_id=access_token.session_id)
-#     return Response(status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    '/login',
+    response_model=schemas.SessionOut,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            'description': 'Validation Error',
+            'model': ExceptionModel,
+        },
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            'description': 'Server Error',
+            'model': ExceptionModel,
+        },
+    },
+)
+@atomic()
+async def login(
+        *,
+        tracking_params: schemas.TrackingSchemaMixin = Depends(deps.get_tracking_data),
+        sign_in: schemas.LogIn
+) -> schemas.SessionOut:
+    """Вход с помощью почты и пароля"""
+
+    user_not_found_or_password_incorrect = ValidationError(
+                field_errors=[
+                    FieldError(field='email', message='Пользователь с таким email не существует'),
+                    FieldError(field='password', message='Пароль неправильный')
+                ]
+    )
+
+    try:
+        user = await models.User.get(email=sign_in.email)
+    except DoesNotExist:
+        raise user_not_found_or_password_incorrect
+
+    is_verified = security.verify_password(sign_in.password, user.hashed_password)
+    if not is_verified:
+        raise user_not_found_or_password_incorrect
+
+    session = await services.AuthorizationService.create_session(user, sign_in.platform, tracking_params)
+    return session
+
+
+@router.post(
+    '/refresh-token',
+    response_model=schemas.SessionOut,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            'description': 'Token invalid or expired.',
+            'model': ExceptionModel,
+        },
+    },
+)
+@atomic()
+async def refresh_access_token(
+    *,
+    tracking_params: schemas.TrackingSchemaMixin = Depends(deps.get_tracking_data),
+    access_token: schemas.AccessToken = Depends(deps.get_access_token),
+    refresh_token: str = Body(..., embed=True),
+) -> schemas.SessionOut:
+    """Если приходит 401 ответ, то нужно попробовать обновить токен"""
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail='Could not validate credentials',
+        headers={'WWW-Authenticate': 'Bearer'},
+    )
+    try:
+        old_session = await models.Session.get(
+            access_token=access_token.token, refresh_token=refresh_token
+        ).prefetch_related('user')
+    except DoesNotExist:
+        raise credentials_exception
+
+    session = await services.AuthorizationService.create_session(old_session.user, old_session.platform, tracking_params)
+    await models.Session.filter(uuid=old_session.uuid).delete()
+    return session
+
+
+@router.delete(
+    '/logout',
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_204_NO_CONTENT: {},
+        status.HTTP_404_NOT_FOUND: {
+            'description': 'Token invalid or expired.',
+            'model': ExceptionModel,
+        },
+    },
+)
+async def logout(
+    *,
+    access_token: schemas.AccessToken = Depends(deps.get_access_token),
+) -> Response:
+    await models.Session.get(uuid=access_token.session_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 

@@ -23,7 +23,7 @@ class AccessToken(BaseToken):
 	token_type: enums.TokenType = enums.TokenType.ACCESS
 	token: Optional[str] = None
 	user: UserBase
-	session_id: Optional[UUID] = None
+	session_id: Optional[str] = None
 
 
 class RefreshToken(BaseToken):

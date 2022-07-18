@@ -92,5 +92,5 @@ known_local_folder = "api,core,crud,db,enums,models,schemas,sdk,tests,validators
 
 [tool.aerich]
 src_folder = "./src"
-tortoise_orm = "core.tortoise_config.TORTOISE_ORM"
+tortoise_orm = "core.database.TORTOISE_ORM"
 location = "./migrations"

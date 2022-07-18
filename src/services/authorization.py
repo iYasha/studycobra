@@ -18,10 +18,16 @@ class AuthorizationService:
         session = await models.Session.create(
             user=user,
             platform=platform,
-            access_token=security.create_access_token(user=user_info, user_id=user.uuid, expires_in=expires_in),
             refresh_token=security.create_refresh_token(user=user_info, user_id=user.uuid),
             **tracking_params.dict()
         )
+        session.access_token = security.create_access_token(
+            user=user_info,
+            user_id=user.uuid,
+            session_id=session.uuid,
+            expires_in=expires_in
+        )
+        await session.save()
         return schemas.SessionOut(
             access_token=session.access_token,
             refresh_token=session.refresh_token,

@@ -1,3 +1,5 @@
+from tortoise import Tortoise
+
 from core.celery_app import celery_app
 from fastapi import APIRouter
 from fastapi import status
@@ -22,13 +24,16 @@ def readiness() -> str:
     return str(task)
 
 
-# @router.get("/check_database", response_class=PlainTextResponse)
-# async def check_database() -> str:
-#     """ Эндпоинт для проверки коннекта к БД """
-#
-#     query = "SELECT 1"
-#     result = await database.execute(query)
-#     return str(result)
+@router.get("/check_database", response_class=PlainTextResponse)
+async def check_database() -> str:
+    """ Эндпоинт для проверки коннекта к БД """
+
+    query = "SELECT 1"
+    conn = Tortoise.get_connection('default')
+    result = await conn.execute_query(query)
+
+    await conn.close()
+    return str(result[0])
 
 
 @router.get("/sentry_debug")

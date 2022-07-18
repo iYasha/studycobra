@@ -6,7 +6,7 @@ from tortoise.contrib.fastapi import register_tortoise
 from api.routes import api_router
 from core.config import Settings
 from core.config import settings
-from core.logging_conf import LOGGING, setup_root_logger
+from core.logging_conf import LOGGING
 from core.sentry import init_sentry
 from fastapi.params import Security
 from exceptions.exception_handler_mapping import exception_handler_mapping
@@ -19,8 +19,6 @@ from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
 # logging_config.dictConfig(LOGGING)
-
-setup_root_logger()
 
 app = DefaultFastAPI(
     service_code="StudyCobra",
@@ -58,7 +56,7 @@ if settings.BACKEND_CORS_ORIGINS:
 register_tortoise(
     app,
     db_url=settings.DB_URI,
-    modules={"models": ["models.sessions", "models.users", "aerich.models"]},
+    modules={"models": ["models", "aerich.models"]},
     generate_schemas=True,
     add_exception_handlers=True,
 )
