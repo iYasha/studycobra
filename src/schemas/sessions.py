@@ -48,7 +48,3 @@ class SessionOut(BaseModel):
 	refresh_token: str
 	token_type: str = 'bearer'
 	expires_in: int
-
-
-class RefreshAccessToken(BaseModel):
-	refresh_token: str

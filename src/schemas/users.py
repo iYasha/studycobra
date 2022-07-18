@@ -30,15 +30,12 @@ class UserBase(BaseModel):
     class Config:
         validate_assignment = True
         use_enum_values = True
+        orm_mode = True
 
 
 class UserInDB(UserBase):
-    id: Optional[UUID] = None
+    uuid: Optional[UUID] = None
     hashed_password: Optional[str] = None
-
-
-class UserInToken(UserBase):
-    pass
 
 
 class User(schemas.UUIDSchemaMixin, schemas.AuditSchemaMixin, UserBase):

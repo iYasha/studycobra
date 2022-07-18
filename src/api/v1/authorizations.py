@@ -3,6 +3,8 @@ from typing import List, Union
 from uuid import UUID
 
 from starlette.responses import Response
+from tortoise.exceptions import DoesNotExist
+from tortoise.transactions import atomic
 
 import enums
 from core import security
@@ -10,41 +12,15 @@ from core.config import settings
 from fastapi import APIRouter, Depends, Body, HTTPException
 from fastapi import status
 
-from core.database import database
 from exceptions import ValidationError
 from exceptions.schemas import ExceptionModel
 import schemas
-import crud
+import models
 from sdk.exceptions import FieldError
 from api import deps
+import services
 
 router = APIRouter()
-
-
-async def create_session(user: Union[schemas.User, schemas.UserInDB], platform: enums.PlatformType, tracking_params: schemas.TrackingSchemaMixin) -> schemas.SessionOut:
-    user_info = schemas.UserInToken.parse_obj(user)
-    access_token_expires_in = security.get_token_expires(
-        timedelta(
-            minutes=settings.SSO_ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-    )
-
-    session = await crud.SessionCRUD.create(
-        schemas.SessionCreate(
-            user_id=user.id,
-            platform=platform,
-            access_token=security.create_access_token(
-                user=user_info, user_id=user.id, expires_in=access_token_expires_in
-            ),
-            refresh_token=security.create_refresh_token(user=user_info, user_id=user.id),
-            **tracking_params.dict(),
-        )
-    )
-
-    return schemas.SessionOut(
-        **session.dict(),
-        expires_in=round(access_token_expires_in.timestamp()),
-    )
 
 
 @router.post(
@@ -61,7 +37,7 @@ async def create_session(user: Union[schemas.User, schemas.UserInDB], platform: 
         },
     },
 )
-@database.transaction()
+@atomic()
 async def register(
         *,
         tracking_params: schemas.TrackingSchemaMixin = Depends(deps.get_tracking_data),
@@ -69,9 +45,11 @@ async def register(
 ) -> schemas.SessionOut:
     """Регистрация с помощью почты и пароля"""
 
-    is_user_exists = await crud.UserCRUD.get_by_email(sign_up.email)
+    is_user_exists = await models.User.exists(email=sign_up.email)
     if is_user_exists:
-        raise ValidationError(field_errors=[FieldError(field='email', message='Пользователь с таким email уже существует')])
+        raise ValidationError(
+            field_errors=[FieldError(field='email', message='Пользователь с таким email уже существует')]
+        )
 
     create_user = schemas.UserInDB(
         **sign_up.dict()
@@ -80,8 +58,9 @@ async def register(
     if sign_up.password is not None:
         create_user.hashed_password = security.get_password_hash(sign_up.password)
 
-    user = await crud.UserCRUD.create(create_user)
-    return await create_session(user, sign_up.platform, tracking_params)
+    user = await models.User.create(**create_user.dict(exclude_unset=True))
+    session = await services.AuthorizationService.create_session(user, sign_up.platform, tracking_params)
+    return session
 
 
 @router.post(
@@ -98,13 +77,14 @@ async def register(
         },
     },
 )
-@database.transaction()
+@atomic()
 async def login(
         *,
         tracking_params: schemas.TrackingSchemaMixin = Depends(deps.get_tracking_data),
         sign_in: schemas.LogIn
 ) -> schemas.SessionOut:
-    """Вход с помощью почты и пароля или Apple Token"""
+    """Вход с помощью почты и пароля"""
+
     user_not_found_or_password_incorrect = ValidationError(
                 field_errors=[
                     FieldError(field='email', message='Пользователь с таким email не существует'),
@@ -112,14 +92,17 @@ async def login(
                 ]
     )
 
-    user = await crud.UserCRUD.get_by_email(sign_in.email)
-    if not user:
+    try:
+        user = await models.User.get(email=sign_in.email)
+    except DoesNotExist:
         raise user_not_found_or_password_incorrect
+
     is_verified = security.verify_password(sign_in.password, user.hashed_password)
     if not is_verified:
         raise user_not_found_or_password_incorrect
 
-    return await create_session(user, sign_in.platform, tracking_params)
+    session = await services.AuthorizationService.create_session(user, sign_in.platform, tracking_params)
+    return session
 
 
 @router.post(
@@ -132,24 +115,29 @@ async def login(
         },
     },
 )
-@database.transaction()
+@atomic()
 async def refresh_access_token(
     *,
     tracking_params: schemas.TrackingSchemaMixin = Depends(deps.get_tracking_data),
-    access_token: schemas.AccessToken = Depends(deps.get_access_token_without_verify),
-    refresh_token: schemas.RefreshAccessToken,
+    access_token: schemas.AccessToken = Depends(deps.get_access_token),
+    refresh_token: str = Body(..., embed=True),
 ) -> schemas.SessionOut:
+    """Если приходит 401 ответ, то нужно попробовать обновить токен"""
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail='Could not validate credentials',
         headers={'WWW-Authenticate': 'Bearer'},
     )
-    old_session = await crud.SessionCRUD.get_by_tokens(access_token=access_token.token, refresh_token=refresh_token.refresh_token)
-    if old_session is None:
+    try:
+        old_session = await models.Session.get(
+            access_token=access_token.token, refresh_token=refresh_token
+        ).prefetch_related('user')
+    except DoesNotExist:
         raise credentials_exception
-    user = await crud.UserCRUD.get_by_id(old_session.user_id)
-    session = await create_session(user, old_session.platform, tracking_params)
-    await crud.SessionCRUD.destroy(obj_id=old_session.id)
+
+    session = await services.AuthorizationService.create_session(old_session.user, old_session.platform, tracking_params)
+    await models.Session.filter(uuid=old_session.uuid).delete()
     return session
 
 
@@ -168,7 +156,7 @@ async def logout(
     *,
     access_token: schemas.AccessToken = Depends(deps.get_access_token),
 ) -> Response:
-    await crud.SessionCRUD.destroy(obj_id=access_token.session_id)
+    await models.Session.get(uuid=access_token.session_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

@@ -1,5 +1,6 @@
+from tortoise import Tortoise
+
 from core.celery_app import celery_app
-from core.database import database
 from fastapi import APIRouter
 from fastapi import status
 from fastapi.responses import JSONResponse
@@ -28,8 +29,11 @@ async def check_database() -> str:
     """ Эндпоинт для проверки коннекта к БД """
 
     query = "SELECT 1"
-    result = await database.execute(query)
-    return str(result)
+    conn = Tortoise.get_connection('default')
+    result = await conn.execute_query(query)
+
+    await conn.close()
+    return str(result[0])
 
 
 @router.get("/sentry_debug")

@@ -26,7 +26,7 @@ def get_jwt_algorithm() -> str:
     return settings.SSO_AUTH_JWT_ALGORITHMS
 
 
-def get_token_expires(expires_delta: timedelta = None):
+def get_token_expires(expires_delta: timedelta = None) -> datetime:
     if expires_delta:
         return datetime.utcnow() + expires_delta
     return datetime.utcnow() + timedelta(
@@ -50,12 +50,12 @@ def decode_jwt_token(token: str, payload_schema: Type[PayloadSchema], verify: bo
         return payload_schema(**payload)
     except (jwt.PyJWTError, ValidationError):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Token invalid or expired.',
         )
 
 
-def create_access_token(user: schemas.UserInToken, user_id: UUID, expires_in: datetime = None):
+def create_access_token(user: schemas.UserBase, user_id: UUID, session_id: UUID, expires_in: datetime = None):
     expires_delta = timedelta(
         minutes=settings.SSO_ACCESS_TOKEN_EXPIRE_MINUTES
     )
@@ -67,12 +67,13 @@ def create_access_token(user: schemas.UserInToken, user_id: UUID, expires_in: da
         iat=datetime.utcnow(),
         exp=expires,
         sub=str(user_id),
-        user=user.dict()
+        user=user.dict(),
+        session_id=str(session_id)
     )
     return create_jwt_token(body)
 
 
-def create_refresh_token(user: schemas.UserInToken, user_id: UUID):
+def create_refresh_token(user: schemas.UserBase, user_id: UUID):
     expires_delta = timedelta(
         minutes=settings.SSO_REFRESH_TOKEN_EXPIRE_MINUTES
     )

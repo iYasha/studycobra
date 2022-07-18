@@ -69,7 +69,7 @@ class EnvSettings(BaseSettings):
 
         path = values.get("POSTGRES_DB", "")
         return PostgresDsn.build(
-            scheme="postgresql",
+            scheme="postgres",
             user=values.get("POSTGRES_USER"),
             password=values.get("POSTGRES_PASSWORD"),
             host=values.get("POSTGRES_HOST"),
@@ -92,7 +92,6 @@ class EnvSettings(BaseSettings):
     CELERY_TASK_SERIALIZER = "json"
     CELERYD_MAX_TASKS_PER_CHILD: int = 1
 
-
     @validator("RABBIT_URL", 'CELERY_BROKER_URL', pre=True)
     def assemble_celery_broker_url(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
         if isinstance(v, str):
@@ -105,6 +104,15 @@ class EnvSettings(BaseSettings):
             values.get("RABBIT_PORT"),
             values.get("RABBIT_VHOST"),
         )
+
+    # Logging
+    LOG_DIR: str = 'logs'
+
+    @validator("LOG_DIR", pre=True)
+    def remove_final_slash_from_dir(cls, v: Optional[str], values: Dict[str, Any]) -> str:
+        if v is None:
+            raise ValueError("LOG_DIR is not defined")
+        return v.rstrip('/')
 
     # Основные сервисы системы
 

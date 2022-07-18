@@ -1,21 +1,16 @@
-import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql.base import UUID
-from sqlalchemy.orm import relationship
+from tortoise.models import Model
+from tortoise import fields
 
-from core.database import Base
 from models.base import UUIDModelMixin, AuditMixin, TrackingMixin
 
 
 class Session(
-    UUIDModelMixin, TrackingMixin, AuditMixin, Base
+    UUIDModelMixin, TrackingMixin, AuditMixin, Model
 ):
     """ Модель сессии пользователя """
 
-    __tablename__ = 'sessions'
+    access_token = fields.TextField(null=True)
+    refresh_token = fields.TextField(null=True)
+    platform = fields.CharField(max_length=20)
 
-    access_token = sa.Column(sa.String, nullable=True)
-    refresh_token = sa.Column(sa.String, nullable=True)
-    platform = sa.Column(sa.String, nullable=False)
-
-    user_id = sa.Column(UUID, sa.ForeignKey('users.id'), nullable=False)
-    user = relationship('User', back_populates='sessions')
+    user = fields.ForeignKeyField('models.User', related_name='sessions')

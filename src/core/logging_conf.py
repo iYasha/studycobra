@@ -1,6 +1,8 @@
 import sys
-
+import logging
+from logging import handlers
 import structlog
+from core.config import settings
 
 LOGGING = {
     "version": 1,
