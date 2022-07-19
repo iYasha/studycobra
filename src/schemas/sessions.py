@@ -4,11 +4,11 @@ from uuid import UUID
 from pydantic import BaseModel
 
 import enums
-from schemas.base import TrackingSchemaMixin, AuditSchemaMixin
+from schemas.base import TrackingSchemaMixin, AuditSchemaMixin, BaseSchema
 from schemas.users import User
 
 
-class SessionBase(TrackingSchemaMixin, BaseModel):
+class SessionBase(TrackingSchemaMixin, BaseSchema):
 	user_id: UUID
 	access_token: Optional[str] = None
 	refresh_token: Optional[str] = None
@@ -43,7 +43,7 @@ class SessionWithUser(SessionInDBBase):
 	user: User
 
 
-class SessionOut(BaseModel):
+class SessionOut(BaseSchema):
 	access_token: str
 	refresh_token: str
 	token_type: str = 'bearer'

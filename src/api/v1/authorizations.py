@@ -52,7 +52,8 @@ async def register(
         )
 
     create_user = schemas.UserInDB(
-        **sign_up.dict()
+        **sign_up.dict(),
+        role=enums.UserRole.ADMIN
     )
 
     if sign_up.password is not None:
@@ -156,9 +157,5 @@ async def logout(
     *,
     access_token: schemas.AccessToken = Depends(deps.get_access_token),
 ) -> Response:
-    await models.Session.get(uuid=access_token.session_id)
+    await models.Session.filter(uuid=access_token.session_id).delete()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-
-

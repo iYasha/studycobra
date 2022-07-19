@@ -116,6 +116,8 @@ class EnvSettings(BaseSettings):
 
     # Основные сервисы системы
 
+    DEFAULT_DATETIME_FORMAT: str = '%Y-%m-%dT%H:%M:%S%z'
+
     # SSO settings
     SSO_AUTH_JWT_KEY: str = "test"
     SSO_AUTH_JWT_VERIFY_SIGNATURE: bool = False

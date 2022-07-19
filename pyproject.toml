@@ -60,6 +60,12 @@ pycrypto = "^2.6.1"
 aerich = "^0.6.3"
 tortoise-orm = {extras = ["asyncpg"], version = "^0.19.2"}
 
+
+[tool.aerich]
+tortoise_orm = "core.database.TORTOISE_ORM"
+location = "./migrations"
+src_folder = "./src"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
@@ -89,8 +95,3 @@ default_section = "FIRSTPARTY"
 force_single_line = "True"
 sections = "FUTURE,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
 known_local_folder = "api,core,crud,db,enums,models,schemas,sdk,tests,validators"
-
-[tool.aerich]
-src_folder = "./src"
-tortoise_orm = "core.database.TORTOISE_ORM"
-location = "./migrations"

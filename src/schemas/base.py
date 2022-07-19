@@ -8,12 +8,28 @@ from uuid import UUID
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
 
+from core.config import settings
+
 BaseModelType = TypeVar("BaseModelType", bound=BaseModel)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 
 
+class BaseSchema(BaseModel):
+    class Config:
+        json_encoders = {
+            datetime: lambda dt: dt.strftime(settings.DEFAULT_DATETIME_FORMAT)
+        }
+
+
+class QuerySetMixin(BaseModel):
+
+    @classmethod
+    def from_queryset(cls, queryset: list) -> List[BaseModelType]:
+        return [cls.from_orm(e) for e in queryset]
+
+
 class UUIDSchemaMixin(BaseModel):
-    id: UUID
+    uuid: UUID
 
 
 class PaginatedSchema(GenericModel, Generic[BaseModelType]):
