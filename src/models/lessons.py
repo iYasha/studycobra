@@ -2,6 +2,7 @@ from tortoise.models import Model
 from tortoise import fields
 
 from models.base import UUIDModelMixin, AuditMixin
+from models.homeworks import Homework
 
 
 class Lesson(
@@ -17,4 +18,6 @@ class Lesson(
     teachers = fields.ManyToManyField('models.GroupTeacher', related_name='lessons')
 
     additional_files = fields.ManyToManyField('models.File')
+
+    homeworks: fields.ReverseRelation['Homework']
 

@@ -22,8 +22,9 @@ router = APIRouter()
     "/{file_id}",
 )
 async def get_file(
-        file_id: UUID,
-        content_range: str = Header(None, alias='Range'),
+    *,
+    file_id: UUID,
+    content_range: str = Header(None, alias='Range'),
 ):
     """ Получить файл """
 
@@ -57,7 +58,9 @@ async def get_file(
     '/',
 )
 async def upload_file(
-        file: UploadFile = File(...),
+    *,
+    access_token: schemas.AccessToken = Depends(deps.get_access_token),  # noqa
+    file: UploadFile = File(...),
 ) -> schemas.File:
     """ Загрузить файл """
     content = await file.read()

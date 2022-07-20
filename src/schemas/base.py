@@ -5,8 +5,9 @@ from typing import Optional
 from typing import TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from pydantic.generics import GenericModel
+from tortoise import fields
 
 from core.config import settings
 
@@ -19,6 +20,12 @@ class BaseSchema(BaseModel):
         json_encoders = {
             datetime: lambda dt: dt.strftime(settings.DEFAULT_DATETIME_FORMAT)
         }
+
+    @validator('*', pre=True)
+    def _iter_to_list(cls, v):
+        if isinstance(v, fields.ReverseRelation) and isinstance(v.related_objects, list):
+            return list(v)
+        return v
 
 
 class QuerySetMixin(BaseModel):

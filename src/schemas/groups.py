@@ -3,6 +3,7 @@ from typing import Optional, List
 from uuid import UUID
 
 from pydantic import BaseModel, validator
+from tortoise import fields
 
 import enums
 from schemas.base import TrackingSchemaMixin, AuditSchemaMixin, UUIDSchemaMixin, QuerySetMixin, BaseSchema
@@ -42,10 +43,6 @@ class Group(UUIDSchemaMixin, AuditSchemaMixin, QuerySetMixin, GroupBase):
     course: Course
     creator_id: UUID
     teachers: List[GroupTeacher]
-
-    @validator('teachers', 'students', pre=True)
-    def _iter_to_list(cls, v):
-        return list(v)
 
 
 class GroupDetail(Group):

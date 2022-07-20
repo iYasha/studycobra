@@ -77,7 +77,7 @@ async def create_group(
 )
 async def update_group(
     *,
-    user: models.User = Depends(deps.get_current_user),  # noqa
+    access_token: schemas.AccessToken = Depends(deps.get_access_token),  # noqa
     group_id: UUID,
     group_data: schemas.GroupUpdate
 ) -> Response:
@@ -95,78 +95,10 @@ async def update_group(
 )
 async def delete_group(
     *,
-    user: models.User = Depends(deps.get_current_user),  # noqa
+    access_token: schemas.AccessToken = Depends(deps.get_access_token),  # noqa
     group_id: UUID
 ) -> Response:
     """Удалить группу"""
 
     await models.Group.filter(uuid=group_id).delete()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.post(
-    '/{group_id}/students/{student_id}',
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-@atomic()
-async def add_student_to_group(
-    *,
-    user: models.User = Depends(deps.get_current_user),  # noqa
-    is_archived: bool = Body(..., embed=True),
-    group_id: UUID,
-    student_id: UUID
-):
-    """Добавить/обновить студента в группе"""
-
-    await models.GroupStudent.update_or_create(user_id=student_id, group_id=group_id, defaults={'is_archived': is_archived})
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.delete(
-    '/{group_id}/students/{student_id}',
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-async def remove_student_from_group(
-    *,
-    user: models.User = Depends(deps.get_current_user),  # noqa
-    group_id: UUID,
-    student_id: UUID
-):
-    """Удалить студента из группы"""
-
-    await models.GroupStudent.filter(user_id=student_id, group_id=group_id).delete()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.post(
-    '/{group_id}/teachers/{teacher_id}',
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-async def add_teacher_to_group(
-    *,
-    user: models.User = Depends(deps.get_current_user),  # noqa
-    role: enums.TeacherRole = Body(..., embed=True),
-    group_id: UUID,
-    teacher_id: UUID
-):
-    """Добавить/обновить преподавателя в группе"""
-
-    await models.GroupTeacher.update_or_create(user_id=teacher_id, group_id=group_id, defaults={'role': role})
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.delete(
-    '/{group_id}/teachers/{teacher_id}',
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-async def remove_teacher_from_group(
-    *,
-    user: models.User = Depends(deps.get_current_user),  # noqa
-    group_id: UUID,
-    teacher_id: UUID
-):
-    """Удалить преподавателя из группы"""
-
-    await models.GroupTeacher.filter(user_id=teacher_id, group_id=group_id).delete()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
