@@ -59,6 +59,7 @@ passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 pycrypto = "^2.6.1"
 aerich = "^0.6.3"
 tortoise-orm = {extras = ["asyncpg"], version = "^0.19.2"}
+python-multipart = "^0.0.5"
 
 
 [tool.aerich]

@@ -40,9 +40,11 @@ class EnvSettings(BaseSettings):
     SENTRY_DSN: Optional[HttpUrl] = None
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
     PROJECT_ROOT: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    MEDIA_DIR: str = PROJECT_ROOT + '/media/'
     BASE_DIR: str = os.path.dirname(os.path.abspath(__file__))
     TESTING: bool = False
     SECRET_KEY: str = ''
+    MAX_FILE_UPLOAD_SIZE_MB: float = 15.0
 
     # Database settings
     POSTGRES_USER: str = "postgres"
