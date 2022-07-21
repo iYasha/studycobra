@@ -6,9 +6,10 @@ from pydantic import BaseModel
 
 import enums
 from schemas.users import UserBase
+from schemas.base import BaseSchema
 
 
-class BaseToken(BaseModel):
+class BaseToken(BaseSchema):
 	iat: datetime
 	exp: datetime
 	sub: str

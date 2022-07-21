@@ -4,11 +4,11 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr, validator, root_validator
 
 import enums
-import schemas
+from schemas import UUIDSchemaMixin, AuditSchemaMixin, BaseSchema
 from core.config import settings
 
 
-class AuthorizationBase(BaseModel):
+class AuthorizationBase(BaseSchema):
     password: str
     platform: enums.PlatformType
 
@@ -26,6 +26,7 @@ class LogIn(AuthorizationBase):
 class UserBase(BaseModel):
     name: Optional[str] = None
     email: EmailStr
+    role: enums.UserRole
 
     class Config:
         validate_assignment = True
@@ -38,5 +39,5 @@ class UserInDB(UserBase):
     hashed_password: Optional[str] = None
 
 
-class User(schemas.UUIDSchemaMixin, schemas.AuditSchemaMixin, UserBase):
+class User(UUIDSchemaMixin, AuditSchemaMixin, UserBase):
     pass

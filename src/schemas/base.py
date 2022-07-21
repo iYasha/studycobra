@@ -5,15 +5,40 @@ from typing import Optional
 from typing import TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from pydantic.generics import GenericModel
+from tortoise import fields
+
+from core.config import settings
 
 BaseModelType = TypeVar("BaseModelType", bound=BaseModel)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 
 
+class BaseSchema(BaseModel):
+    class Config:
+        json_encoders = {
+            datetime: lambda dt: dt.strftime(settings.DEFAULT_DATETIME_FORMAT)
+        }
+
+    @validator('*', pre=True)
+    def _iter_to_list(cls, v):
+        if isinstance(v, fields.ReverseRelation) and isinstance(v.related_objects, list):
+            if len(v.related_objects) != 0:
+                return list(v)
+            return []
+        return v
+
+
+class QuerySetMixin(BaseModel):
+
+    @classmethod
+    def from_queryset(cls, queryset: list) -> List[BaseModelType]:
+        return [cls.from_orm(e) for e in queryset]
+
+
 class UUIDSchemaMixin(BaseModel):
-    id: UUID
+    uuid: UUID
 
 
 class PaginatedSchema(GenericModel, Generic[BaseModelType]):
