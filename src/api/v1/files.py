@@ -1,7 +1,7 @@
 from uuid import UUID
 
 import aiofiles
-from fastapi import APIRouter, UploadFile, File, Header
+from fastapi import APIRouter, UploadFile, File, Header, Depends
 from fastapi import status
 from pathlib import Path
 from starlette.responses import StreamingResponse, FileResponse
@@ -10,6 +10,7 @@ from pydantic.error_wrappers import ValidationError as SchemaValidationError
 import enums
 import models
 import schemas
+from api import deps
 from core.config import settings
 from exceptions.schemas import ExceptionModel
 
@@ -59,7 +60,7 @@ async def get_file(
 )
 async def upload_file(
     *,
-    access_token: schemas.AccessToken = Depends(deps.get_access_token),  # noqa
+    access_token: schemas.AccessToken = Depends(deps.get_access_token),
     file: UploadFile = File(...),
 ) -> schemas.File:
     """ Загрузить файл """

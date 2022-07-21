@@ -23,6 +23,40 @@ import services
 router = APIRouter()
 
 
+@router.post(
+    '/{group_id}/lessons/{lesson_id}/homeworks',
+    response_model=schemas.Homework,
+    responses={},
+)
+@atomic()
+async def create_homework(
+    *,
+    access_token: schemas.AccessToken = Depends(deps.get_access_token),  # noqa
+    group_id: UUID,
+    lesson_id: UUID,
+    new_homework: schemas.HomeworkCreate
+) -> schemas.Homework:
+    """Создать домашнее задание"""
+
+    author = None
+    if new_homework.author_id is not None:
+        author = await models.GroupTeacher.get(uuid=new_homework.author_id).prefetch_related('user')
+
+    homework = await models.Homework.create(lesson_id=lesson_id, author=author, **new_homework.dict(exclude={'author', 'additional_files', 'quiz'}))
+
+    additional_files = await models.File.filter(uuid__in=new_homework.additional_files)
+
+    quizzes = []
+    if homework.homework_type == enums.HomeworkType.QUIZ:
+        quizzes = await services.QuizService.create_quizzes(homework_id=homework.uuid, new_quizzes=new_homework.quiz)
+
+    await homework.additional_files.add(*additional_files)
+
+    await homework.save()
+
+    return schemas.Homework(author=author, quizzes=quizzes, additional_files=additional_files, **dict(homework))
+
+
 @router.get(
     '/{group_id}/lessons/{lesson_id}/homeworks',
     response_model=List[schemas.Homework],
@@ -42,7 +76,7 @@ async def get_homeworks(
 
 
 @router.get(
-    '/{group_id}/lessons/{lesson_id}/homeworks/{homework_id}',
+    '/{group_id}/homeworks/{homework_id}',
     response_model=schemas.Homework,
     responses={},
 )
@@ -50,54 +84,23 @@ async def get_homework(
     *,
     access_token: schemas.AccessToken = Depends(deps.get_access_token),  # noqa
     group_id: UUID,
-    lesson_id: UUID,
     homework_id: UUID,
 ) -> schemas.Homework:
     """Получить подробную информацию о домашнем задании"""
 
-    homework = await models.Homework.get(uuid=homework_id).select_related('author').prefetch_related('additional_files')
+    homework = await models.Homework.get(uuid=homework_id).select_related('author').prefetch_related('additional_files', 'quizzes', 'quizzes__answers', 'author__user')
     return schemas.Homework.from_orm(homework)
 
 
-@router.post(
-    '/{group_id}/lessons/{lesson_id}/homeworks/',
+@router.put(
+    '/{group_id}/homeworks/{homework_id}',
     response_model=schemas.Homework,
-    responses={},
 )
 @atomic()
-async def create_homework(
-    *,
-    access_token: schemas.AccessToken = Depends(deps.get_access_token),  # noqa
-    group_id: UUID,
-    lesson_id: UUID,
-    new_homework: schemas.HomeworkCreate
-) -> schemas.Homework:
-    """Создать домашнее задание"""
-
-    author = None
-    if new_homework.author_id is not None:
-        author = await models.GroupTeacher.get(uuid=new_homework.author_id)
-
-    homework = await models.Homework.create(lesson_id=lesson_id, author=author, **new_homework.dict(exclude={'author', 'additional_files'}))
-
-    additional_files = await models.File.filter(uuid__in=new_homework.additional_files)
-
-    await homework.additional_files.add(*additional_files)
-
-    await homework.save()
-
-    return schemas.Homework(author=author, additional_files=additional_files, **dict(homework))
-
-
-@router.put(
-    '/{group_id}/lessons/{lesson_id}/homeworks/',
-    response_model=schemas.Homework,
-)
 async def update_homework(
     *,
     access_token: schemas.AccessToken = Depends(deps.get_access_token),  # noqa
     group_id: UUID,
-    lesson_id: UUID,
     homework_id: UUID,
     updated_homework: schemas.HomeworkCreate
 ) -> schemas.Homework:
@@ -107,7 +110,7 @@ async def update_homework(
 
     author = None
     if updated_homework.author_id is not None:
-        author = await models.GroupTeacher.get(uuid=updated_homework.author_id)
+        author = await models.GroupTeacher.get(uuid=updated_homework.author_id).prefetch_related('user')
 
     homework = await models.Homework.get(uuid=homework_id)
 
@@ -119,7 +122,12 @@ async def update_homework(
     await homework.additional_files.clear()
     await homework.additional_files.add(*additional_files)
 
+    quizzes = []
+    if homework.homework_type == enums.HomeworkType.QUIZ:
+        await homework.quizzes.all().delete()
+        quizzes = await services.QuizService.create_quizzes(homework_id=homework.uuid, new_quizzes=updated_homework.quiz)
+
     await homework.save()
 
-    return schemas.Homework(author=author, additional_files=additional_files, **dict(homework))
+    return schemas.Homework(author=author, quizzes=quizzes, additional_files=additional_files, **dict(homework))
 

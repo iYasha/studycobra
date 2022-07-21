@@ -7,3 +7,4 @@ from schemas.groups import *
 from schemas.files import *
 from schemas.lessons import *
 from schemas.homeworks import *
+from schemas.quizzes import *

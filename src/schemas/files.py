@@ -1,5 +1,5 @@
 import enums
-from schemas import UUIDSchemaMixin, AuditSchemaMixin, BaseSchema
+from schemas import UUIDSchemaMixin, AuditSchemaMixin, BaseSchema, QuerySetMixin
 
 
 class CreateFile(BaseSchema):
@@ -8,6 +8,6 @@ class CreateFile(BaseSchema):
 	size: float
 
 
-class File(UUIDSchemaMixin, AuditSchemaMixin, CreateFile):
+class File(UUIDSchemaMixin, QuerySetMixin, AuditSchemaMixin, CreateFile):
 	pass
 

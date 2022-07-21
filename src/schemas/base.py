@@ -24,7 +24,9 @@ class BaseSchema(BaseModel):
     @validator('*', pre=True)
     def _iter_to_list(cls, v):
         if isinstance(v, fields.ReverseRelation) and isinstance(v.related_objects, list):
-            return list(v)
+            if len(v.related_objects) != 0:
+                return list(v)
+            return []
         return v
 
 

@@ -3,22 +3,18 @@ from typing import Optional, List
 from uuid import UUID
 
 from pydantic import BaseModel, validator, Field
+from tortoise import fields
 
 import enums
 from schemas.base import TrackingSchemaMixin, AuditSchemaMixin, UUIDSchemaMixin, QuerySetMixin, BaseSchema
 from schemas.groups import GroupTeacher
 from schemas.files import File
-from schemas.quizzes import Quiz, QuizCreate
 
 
-class HomeworkBase(BaseSchema):
-    title: Optional[str] = None
+class QuizBase(BaseSchema):
+    title: str
     description: Optional[str] = None
-    time_terms: datetime
-    retakes_count: int
-    difficulty_level: enums.DifficultyLevel
-    homework_type: enums.HomeworkType
-    overdue_pass: bool = False
+    answer_type: enums.AnswerType
 
     class Config:
         validate_assignment = True
@@ -26,13 +22,19 @@ class HomeworkBase(BaseSchema):
         orm_mode = True
 
 
-class Homework(UUIDSchemaMixin, QuerySetMixin, HomeworkBase):
-    author: Optional[GroupTeacher] = None
-    quizzes: List[Quiz] = Field(default_factory=list)
+class Answer(QuerySetMixin, BaseSchema):
+    text: str
+    is_correct: bool
+
+    class Config:
+        orm_mode = True
+
+
+class Quiz(UUIDSchemaMixin, QuerySetMixin, QuizBase):
     additional_files: List[File] = Field(default_factory=list, description='Id\'s of File instance')
+    answers: List[Answer] = Field(default_factory=list, description='Id\'s of Answer instance')
 
 
-class HomeworkCreate(HomeworkBase):
-    quizzes: List[QuizCreate] = Field(default_factory=list)
-    author_id: Optional[UUID] = Field(default=None, description='Id of GroupTeacher instance that will be check this homework')
+class QuizCreate(QuizBase):
     additional_files: List[UUID] = Field(default_factory=list, description='Id\'s of File instance')
+    answers: List[Answer]

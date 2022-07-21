@@ -6,3 +6,4 @@ from models.groups import *
 from models.lessons import *
 from models.files import *
 from models.homeworks import *
+from models.quizzes import *
