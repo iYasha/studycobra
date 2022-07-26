@@ -21,15 +21,6 @@ class ExceptionModel(BaseModel):
     field_errors: Optional[List[FieldErrorModel]]
 
 
-# def auth_exception_handler(request: Request, exc: SSOBaseAuthException) -> JSONResponse:
-#     capture_exception(exc)
-#
-#     error_message = exc.detail
-#
-#     response = ExceptionModel(error_message=error_message)
-#     return JSONResponse(response.dict(), status_code=exc.status_code)
-
-
 def exception_handler(request: Request, exc: Exception) -> JSONResponse:
     capture_exception(exc)
 

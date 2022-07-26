@@ -8,6 +8,7 @@ import enums
 from schemas.base import TrackingSchemaMixin, AuditSchemaMixin, UUIDSchemaMixin, QuerySetMixin, BaseSchema
 from schemas.groups import GroupTeacher
 from schemas.files import File
+from schemas.users import User
 from schemas.quizzes import Quiz, QuizCreate
 
 
@@ -36,3 +37,41 @@ class HomeworkCreate(HomeworkBase):
     quizzes: List[QuizCreate] = Field(default_factory=list)
     author_id: Optional[UUID] = Field(default=None, description='Id of GroupTeacher instance that will be check this homework')
     additional_files: List[UUID] = Field(default_factory=list, description='Id\'s of File instance')
+
+
+class HomeworkAnswer(UUIDSchemaMixin, QuerySetMixin, BaseSchema):
+    answer: Optional[str] = None
+    teacher_description: Optional[str] = None
+    points: Optional[int] = None
+    file: Optional[File] = None
+    teacher_file: Optional[File] = None
+    student: User
+
+    class Config:
+        validate_assignment = True
+        use_enum_values = True
+        orm_mode = True
+
+
+class HomeworkAnswerStudentCreate(BaseSchema):
+    answer: Optional[str] = None
+    file_id: Optional[UUID] = None
+
+    @validator('*', pre=True)
+    def validate_answer(cls, v, values, **kwargs):
+        if values['answer'] is None and values['file_id'] is None:
+            raise ValueError('Answer or file_id must be set')
+        return v
+
+
+class HomeworkAnswerTeacherCreate(BaseSchema):
+    teacher_description: Optional[str] = None
+    teacher_file_id: Optional[UUID] = None
+    points: int = Field(ge=0, le=100)
+
+    @validator('*', pre=True)
+    def validate_teacher_description(cls, v, values, **kwargs):
+        if values['teacher_description'] is None and values['teacher_file_id'] is None:
+            raise ValueError('Teacher_description or teacher_file_id must be set')
+        return v
+

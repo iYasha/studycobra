@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from tortoise.models import Model
 from tortoise import fields
 
@@ -24,4 +26,27 @@ class Homework(
     additional_files = fields.ManyToManyField('models.File')
 
     quizzes: fields.ReverseRelation['Quiz']
+
+    def can_be_created(self, student_retakes_count: int) -> bool:
+        is_not_overdue = (self.time_terms > datetime.now() and not self.overdue_pass) or self.overdue_pass
+        has_retakes_count = self.retakes_count > student_retakes_count
+        return is_not_overdue and has_retakes_count
+
+
+class HomeworkAnswer(
+    UUIDModelMixin, AuditMixin, Model
+):
+    """Модель решения домашнего задания"""
+
+    answer = fields.TextField(null=True)
+    teacher_description = fields.TextField(null=True)
+    points = fields.IntField(null=True)
+
+    student = fields.ForeignKeyField('models.User', related_name='homework_answers', on_delete='CASCADE')
+    file = fields.ForeignKeyField('models.File', null=True, related_name='homework_answers_student_files', on_delete=fields.SET_NULL)
+    teacher_file = fields.ForeignKeyField('models.File', related_name='homework_answers_teacher_files', null=True, on_delete=fields.SET_NULL)
+    homework = fields.ForeignKeyField('models.Homework', related_name='answers', on_delete='CASCADE')
+
+
+
 

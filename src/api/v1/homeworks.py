@@ -125,9 +125,8 @@ async def update_homework(
     quizzes = []
     if homework.homework_type == enums.HomeworkType.QUIZ:
         await homework.quizzes.all().delete()
-        quizzes = await services.QuizService.create_quizzes(homework_id=homework.uuid, new_quizzes=updated_homework.quiz)
+        quizzes = await services.QuizService.create_quizzes(homework_id=homework.uuid, new_quizzes=updated_homework.quizzes)
 
     await homework.save()
 
     return schemas.Homework(author=author, quizzes=quizzes, additional_files=additional_files, **dict(homework))
-

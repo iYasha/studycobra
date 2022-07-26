@@ -34,13 +34,6 @@ app = DefaultFastAPI(
 # Routers
 app.include_router(api_router, prefix=settings.URL_SUBPATH + settings.API_V1_STR)
 
-# Middlewares
-# app.add_middleware(
-#     AuthenticationMiddleware,
-#     backend=SSOAuthBackend(),
-#     # on_error=auth_exception_handler,
-# )
-
 if settings.SENTRY_DSN:
     app = init_sentry(app)
 

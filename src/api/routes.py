@@ -1,4 +1,4 @@
-from api.v1 import healthchecks, authorizations, groups, files, lessons, students, teachers, homeworks
+from api.v1 import healthchecks, authorizations, groups, files, lessons, students, teachers, homeworks, homework_answers
 from fastapi import APIRouter
 
 api_router = APIRouter()
@@ -11,3 +11,4 @@ api_router.include_router(teachers.router, prefix="/groups", tags=["teachers"])
 api_router.include_router(files.router, prefix="/files", tags=["files"])
 api_router.include_router(lessons.router, prefix="/groups", tags=["lessons"])
 api_router.include_router(homeworks.router, prefix="/groups", tags=["homeworks"])
+api_router.include_router(homework_answers.router, prefix="/homeworks", tags=["homeworks"])
