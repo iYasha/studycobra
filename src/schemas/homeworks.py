@@ -2,14 +2,14 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 
-from pydantic import BaseModel, validator, Field
+from pydantic import validator, Field
 
 import enums
-from schemas.base import TrackingSchemaMixin, AuditSchemaMixin, UUIDSchemaMixin, QuerySetMixin, BaseSchema
-from schemas.groups import GroupTeacher
+from schemas.base import UUIDSchemaMixin, QuerySetMixin, BaseSchema
 from schemas.files import File
-from schemas.users import User
+from schemas.groups import GroupTeacher
 from schemas.quizzes import Quiz, QuizCreate
+from schemas.users import User
 
 
 class HomeworkBase(BaseSchema):
@@ -35,7 +35,10 @@ class Homework(UUIDSchemaMixin, QuerySetMixin, HomeworkBase):
 
 class HomeworkCreate(HomeworkBase):
     quizzes: List[QuizCreate] = Field(default_factory=list)
-    author_id: Optional[UUID] = Field(default=None, description='Id of GroupTeacher instance that will be check this homework')
+    author_id: Optional[UUID] = Field(
+        default=None,
+        description='Id of GroupTeacher instance that will be check this homework'
+    )
     additional_files: List[UUID] = Field(default_factory=list, description='Id\'s of File instance')
 
 

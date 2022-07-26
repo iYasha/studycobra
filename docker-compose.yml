@@ -133,4 +133,4 @@ services:
 networks:
   traefik-public:
     # Allow setting it to false for testing
-    external: ${TRAEFIK_PUBLIC_NETWORK_IS_EXTERNAL-true}
+    external: true

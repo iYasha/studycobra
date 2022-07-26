@@ -6,11 +6,11 @@ from alembic.command import upgrade as alembic_upgrade
 from requests import Session as RequestSession
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
+from sso_auth.config import SSOAuthConfig
 from starlette.testclient import TestClient
 
 from core.config import settings
 from logger.in_requests.application import DefaultFastAPI
-from sso_auth.config import SSOAuthConfig
 from .common import TestGlobalSession
 from .utils import alembic_config_from_url
 from .utils import tmp_database

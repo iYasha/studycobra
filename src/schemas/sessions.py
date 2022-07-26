@@ -1,8 +1,6 @@
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
-
 import enums
 from schemas.base import TrackingSchemaMixin, AuditSchemaMixin, BaseSchema
 from schemas.users import User

@@ -1,12 +1,9 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
-
-from pydantic import BaseModel
 
 import enums
-from schemas.users import UserBase
 from schemas.base import BaseSchema
+from schemas.users import UserBase
 
 
 class BaseToken(BaseSchema):

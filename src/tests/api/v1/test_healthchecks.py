@@ -1,6 +1,7 @@
-from core.config import settings
 from fastapi.testclient import TestClient
 from starlette import status
+
+from core.config import settings
 
 
 def test_readiness(client: TestClient) -> None:

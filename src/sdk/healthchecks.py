@@ -74,7 +74,7 @@ async def check_file_storage() -> str:
         if result != content:
             raise Exception("File content does not match")
 
-        await aiofiles.os.remove(file_name)
+        os.remove(file_name)
 
     except Exception as e:
         return str(e)

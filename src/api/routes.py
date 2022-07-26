@@ -1,5 +1,6 @@
-from api.v1 import healthchecks, authorizations, groups, files, lessons, students, teachers, homeworks, homework_answers
 from fastapi import APIRouter
+
+from api.v1 import healthchecks, authorizations, groups, files, lessons, students, teachers, homeworks, homework_answers
 
 api_router = APIRouter()
 

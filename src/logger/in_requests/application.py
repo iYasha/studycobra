@@ -1,9 +1,9 @@
 from fastapi import Depends
 from fastapi import FastAPI
 
+from logger.config import configure_structlog_logger
 from .middleware import log_request_body_dependency, set_response_time_to_header
 from .middleware import log_request_middleware
-from logger.config import configure_structlog_logger
 
 
 class DefaultFastAPI(FastAPI):

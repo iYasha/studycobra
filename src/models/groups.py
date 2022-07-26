@@ -1,7 +1,5 @@
-from typing import Any
-
-from tortoise.models import Model
 from tortoise import fields
+from tortoise.models import Model
 
 from models.base import UUIDModelMixin, AuditMixin
 from models.lessons import Lesson

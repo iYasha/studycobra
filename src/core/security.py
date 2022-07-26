@@ -2,17 +2,15 @@ from datetime import timedelta, datetime
 from typing import TypeVar, Type
 from uuid import UUID
 
-from fastapi.security import OAuth2AuthorizationCodeBearer
-from fastapi import HTTPException
-from passlib.context import CryptContext
 import jwt
+from fastapi import HTTPException
+from fastapi.security import OAuth2AuthorizationCodeBearer
+from passlib.context import CryptContext
 from pydantic import ValidationError
 from starlette import status
 
-from core.config import settings
 import schemas
-from sdk.exceptions import FieldError
-from exceptions import ValidationError as ValidationErrorException
+from core.config import settings
 
 PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

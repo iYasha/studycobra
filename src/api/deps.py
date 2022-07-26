@@ -1,8 +1,8 @@
 from fastapi import Request, HTTPException, status, Depends
 
+import models
 from core.security import decode_jwt_token, oauth2_scheme
 from schemas import AccessToken, TrackingSchemaMixin
-import models
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> models.User:

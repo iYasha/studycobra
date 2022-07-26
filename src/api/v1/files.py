@@ -1,19 +1,17 @@
+from pathlib import Path
 from uuid import UUID
 
 import aiofiles
 from fastapi import APIRouter, UploadFile, File, Header, Depends
 from fastapi import status
-from pathlib import Path
-from starlette.responses import StreamingResponse, FileResponse
 from pydantic.error_wrappers import ValidationError as SchemaValidationError
+from starlette.responses import StreamingResponse, FileResponse
 
 import enums
 import models
 import schemas
 from api import deps
 from core.config import settings
-from exceptions.schemas import ExceptionModel
-
 from sdk import utils
 
 router = APIRouter()

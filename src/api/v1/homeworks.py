@@ -1,24 +1,14 @@
-from datetime import timedelta
-from typing import List, Union
+from typing import List
 from uuid import UUID
 
-from starlette.responses import Response
-from tortoise.exceptions import DoesNotExist
+from fastapi import APIRouter, Depends
 from tortoise.transactions import atomic
 
 import enums
-from core import security
-from core.config import settings
-from fastapi import APIRouter, Depends, Body, HTTPException, Query
-from fastapi import status
-
-from exceptions import ValidationError
-from exceptions.schemas import ExceptionModel
-import schemas
 import models
-from sdk.exceptions import FieldError
-from api import deps
+import schemas
 import services
+from api import deps
 
 router = APIRouter()
 
@@ -42,13 +32,17 @@ async def create_homework(
     if new_homework.author_id is not None:
         author = await models.GroupTeacher.get(uuid=new_homework.author_id).prefetch_related('user')
 
-    homework = await models.Homework.create(lesson_id=lesson_id, author=author, **new_homework.dict(exclude={'author', 'additional_files', 'quiz'}))
+    homework = await models.Homework.create(
+        lesson_id=lesson_id,
+        author=author,
+        **new_homework.dict(exclude={'author', 'additional_files', 'quiz'})
+    )
 
     additional_files = await models.File.filter(uuid__in=new_homework.additional_files)
 
     quizzes = []
     if homework.homework_type == enums.HomeworkType.QUIZ:
-        quizzes = await services.QuizService.create_quizzes(homework_id=homework.uuid, new_quizzes=new_homework.quiz)
+        quizzes = await services.QuizService.create_quizzes(homework_id=homework.uuid, new_quizzes=new_homework.quizzes)
 
     await homework.additional_files.add(*additional_files)
 
@@ -70,7 +64,10 @@ async def get_homeworks(
 ) -> List[schemas.Homework]:
     """Получить список домашних заданий"""
 
-    homeworks = await models.Homework.filter(lesson_id=lesson_id).order_by('created_at').select_related('author').prefetch_related('additional_files')
+    homeworks = await models.Homework.filter(lesson_id=lesson_id)\
+        .order_by('created_at')\
+        .select_related('author')\
+        .prefetch_related('additional_files')
 
     return schemas.Homework.from_queryset(homeworks)
 
@@ -88,7 +85,9 @@ async def get_homework(
 ) -> schemas.Homework:
     """Получить подробную информацию о домашнем задании"""
 
-    homework = await models.Homework.get(uuid=homework_id).select_related('author').prefetch_related('additional_files', 'quizzes', 'quizzes__answers', 'author__user')
+    homework = await models.Homework.get(uuid=homework_id)\
+        .select_related('author')\
+        .prefetch_related('additional_files', 'quizzes', 'quizzes__answers', 'author__user')
     return schemas.Homework.from_orm(homework)
 
 
@@ -125,7 +124,10 @@ async def update_homework(
     quizzes = []
     if homework.homework_type == enums.HomeworkType.QUIZ:
         await homework.quizzes.all().delete()
-        quizzes = await services.QuizService.create_quizzes(homework_id=homework.uuid, new_quizzes=updated_homework.quizzes)
+        quizzes = await services.QuizService.create_quizzes(
+            homework_id=homework.uuid,
+            new_quizzes=updated_homework.quizzes
+        )
 
     await homework.save()
 

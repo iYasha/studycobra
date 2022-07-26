@@ -1,11 +1,11 @@
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, validator, root_validator
+from pydantic import BaseModel, EmailStr, validator
 
 import enums
-from schemas import UUIDSchemaMixin, AuditSchemaMixin, BaseSchema
 from core.config import settings
+from schemas import UUIDSchemaMixin, AuditSchemaMixin, BaseSchema
 
 
 class AuthorizationBase(BaseSchema):

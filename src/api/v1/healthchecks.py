@@ -1,12 +1,12 @@
-from tortoise import Tortoise
-
-from core.celery_app import celery_app
 from fastapi import APIRouter
 from fastapi import status
 from fastapi.responses import JSONResponse
+from starlette.responses import PlainTextResponse
+from tortoise import Tortoise
+
+from core.celery_app import celery_app
 from schemas.healthchecks import HealthCheckStatuses
 from sdk import healthchecks as hc_utils
-from starlette.responses import PlainTextResponse
 
 router = APIRouter()
 

@@ -1,22 +1,17 @@
-from logging import config as logging_config
-
 import uvicorn
+from fastapi.params import Security
+from starlette.middleware.cors import CORSMiddleware
 from tortoise.contrib.fastapi import register_tortoise
 
 from api.routes import api_router
-from core.config import Settings
 from core.config import settings
-from core.logging_conf import LOGGING
 from core.sentry import init_sentry
-from fastapi.params import Security
 from exceptions.exception_handler_mapping import exception_handler_mapping
 from logger.in_requests.application import DefaultFastAPI
 # from sso_auth.authentication import SSOAuthBackend
 # from sso_auth.config import SSOAuthConfig
 # from sdk.exceptions import auth_exception_handler
 from sdk.security import fake_http_bearer
-from starlette.middleware.authentication import AuthenticationMiddleware
-from starlette.middleware.cors import CORSMiddleware
 
 # logging_config.dictConfig(LOGGING)
 

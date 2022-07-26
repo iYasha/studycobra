@@ -1,3 +1,4 @@
+import logging
 import time
 import uuid
 from typing import Any
@@ -7,8 +8,6 @@ from starlette.requests import Request
 from starlette.responses import Response
 from structlog.contextvars import bind_contextvars
 from structlog.contextvars import clear_contextvars
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +61,10 @@ async def log_request_middleware(request: Request, call_next: Callable) -> Respo
     code = response.status_code
     response_time = time.monotonic() - start_time
     logger.info(
-        f"request_finished {code} {response_time} agent: {user_agent} ip: {ip} method: {method} {path} {url} {request_id}"
+        f"request_finished {code} {response_time} "
+        f"agent: {user_agent} "
+        f"ip: {ip} "
+        f"method: {method} {path} {url} {request_id}"
     )
 
     return response

@@ -2,12 +2,11 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 
-from pydantic import BaseModel, validator, Field
+from pydantic import Field
 
-import enums
-from schemas.base import TrackingSchemaMixin, AuditSchemaMixin, UUIDSchemaMixin, QuerySetMixin, BaseSchema
-from schemas.groups import GroupTeacher
+from schemas.base import UUIDSchemaMixin, QuerySetMixin, BaseSchema
 from schemas.files import File
+from schemas.groups import GroupTeacher
 
 
 class LessonBase(BaseSchema):
@@ -32,7 +31,10 @@ class LessonDetail(Lesson):
 
 
 class LessonCreate(LessonBase):
-    teachers: List[UUID] = Field(default_factory=list, description='Id\'s of GroupTeacher instance that will be assigned to this lesson')
+    teachers: List[UUID] = Field(
+        default_factory=list,
+        description='Id\'s of GroupTeacher instance that will be assigned to this lesson'
+    )
     additional_files: List[UUID] = Field(default_factory=list, description='Id\'s of File instance')
 
 

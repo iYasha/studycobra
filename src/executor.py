@@ -1,8 +1,8 @@
+import builtins
+import os
 import sys
 from io import StringIO
 from typing import Optional
-import builtins
-import os
 
 
 class ForbiddenError(ValueError):

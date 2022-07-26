@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from tortoise.models import Model
 from tortoise import fields
+from tortoise.models import Model
 
 from models.base import UUIDModelMixin, AuditMixin
 from models.quizzes import Quiz
@@ -21,7 +21,12 @@ class Homework(
     homework_type = fields.CharField(max_length=20, null=False)  # default, quiz
 
     lesson = fields.ForeignKeyField('models.Lesson', related_name='homeworks', on_delete='CASCADE')
-    author = fields.ForeignKeyField('models.GroupTeacher', null=True, related_name='homeworks', on_delete=fields.SET_NULL)
+    author = fields.ForeignKeyField(
+        'models.GroupTeacher',
+        null=True,
+        related_name='homeworks',
+        on_delete=fields.SET_NULL
+    )
 
     additional_files = fields.ManyToManyField('models.File')
 
@@ -43,10 +48,16 @@ class HomeworkAnswer(
     points = fields.IntField(null=True)
 
     student = fields.ForeignKeyField('models.User', related_name='homework_answers', on_delete='CASCADE')
-    file = fields.ForeignKeyField('models.File', null=True, related_name='homework_answers_student_files', on_delete=fields.SET_NULL)
-    teacher_file = fields.ForeignKeyField('models.File', related_name='homework_answers_teacher_files', null=True, on_delete=fields.SET_NULL)
+    file = fields.ForeignKeyField(
+        'models.File',
+        null=True,
+        related_name='homework_answers_student_files',
+        on_delete=fields.SET_NULL
+    )
+    teacher_file = fields.ForeignKeyField(
+        'models.File',
+        related_name='homework_answers_teacher_files',
+        null=True,
+        on_delete=fields.SET_NULL
+    )
     homework = fields.ForeignKeyField('models.Homework', related_name='answers', on_delete='CASCADE')
-
-
-
-

@@ -1,24 +1,18 @@
-from datetime import timedelta
-from typing import List, Union
-from uuid import UUID
-
+from fastapi import APIRouter, Depends, Body, HTTPException
+from fastapi import status
 from starlette.responses import Response
 from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import atomic
 
 import enums
+import models
+import schemas
+import services
+from api import deps
 from core import security
-from core.config import settings
-from fastapi import APIRouter, Depends, Body, HTTPException
-from fastapi import status
-
 from exceptions import ValidationError
 from exceptions.schemas import ExceptionModel
-import schemas
-import models
 from sdk.exceptions import FieldError
-from api import deps
-import services
 
 router = APIRouter()
 
@@ -137,7 +131,11 @@ async def refresh_access_token(
     except DoesNotExist:
         raise credentials_exception
 
-    session = await services.AuthorizationService.create_session(old_session.user, old_session.platform, tracking_params)
+    session = await services.AuthorizationService.create_session(
+        old_session.user,
+        old_session.platform,
+        tracking_params
+    )
     await models.Session.filter(uuid=old_session.uuid).delete()
     return session
 

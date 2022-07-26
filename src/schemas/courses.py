@@ -1,10 +1,4 @@
-from datetime import datetime
-from typing import Optional, List
-from uuid import UUID
-
-import enums
-from schemas.base import TrackingSchemaMixin, AuditSchemaMixin, UUIDSchemaMixin, BaseSchema
-from schemas.users import User
+from schemas.base import AuditSchemaMixin, UUIDSchemaMixin, BaseSchema
 
 
 class CourseBase(BaseSchema):

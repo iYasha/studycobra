@@ -1,5 +1,6 @@
-from core.config import settings
 from starlette.testclient import TestClient
+
+from core.config import settings
 
 
 def test_swagger_ok(client: TestClient) -> None:

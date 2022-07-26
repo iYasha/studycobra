@@ -12,6 +12,7 @@ from exceptions.schemas import ExceptionModel
 from exceptions.schemas import FieldErrorModel
 from exceptions.translation import PydanticErrorTranslator
 from exceptions.translation import pattern_translator_groupings
+
 # from sso_auth.exceptions import SSOBaseAuthException
 
 tr = PydanticErrorTranslator(
@@ -73,7 +74,7 @@ def not_found_exception_handler(request: Request, exc: Exception) -> JSONRespons
     service_code = request.app.service_code
 
     error_message = "Страница не найдена."
-    if hasattr(exc, "detail") and exc.detail and exc.detail != "Not Found":
+    if hasattr(exc, "detail") and exc.detail and exc.detail != "Not Found":  # noqa
         error_message = exc.detail
 
     content = ExceptionModel(

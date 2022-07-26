@@ -1,14 +1,10 @@
-import asyncio
 from logging import config as logging_config
 
-import sentry_sdk
 from celery import Celery
-from celery.signals import worker_process_init
-from celery.signals import worker_process_shutdown
+
 from core.config import settings
 from core.logging_conf import LOGGING
-from sentry_sdk.integrations.celery import CeleryIntegration
-from sentry_sdk.integrations.logging import LoggingIntegration
+
 # from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 

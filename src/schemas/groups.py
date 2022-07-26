@@ -1,12 +1,9 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import List
 from uuid import UUID
 
-from pydantic import BaseModel, validator
-from tortoise import fields
-
 import enums
-from schemas.base import TrackingSchemaMixin, AuditSchemaMixin, UUIDSchemaMixin, QuerySetMixin, BaseSchema
+from schemas.base import AuditSchemaMixin, UUIDSchemaMixin, QuerySetMixin, BaseSchema
 from schemas.courses import Course
 from schemas.users import User
 

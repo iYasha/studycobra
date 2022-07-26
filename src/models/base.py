@@ -1,5 +1,6 @@
-from tortoise import fields
 import uuid
+
+from tortoise import fields
 
 
 class UUIDModelMixin:

@@ -1,24 +1,15 @@
-from datetime import timedelta
-from typing import List, Union
+from typing import List
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, Query
+from fastapi import status
 from starlette.responses import Response
-from tortoise.exceptions import DoesNotExist
 from tortoise.transactions import atomic
 
-import enums
-from core import security
-from core.config import settings
-from fastapi import APIRouter, Depends, Body, HTTPException, Query
-from fastapi import status
-
-from exceptions import ValidationError
-from exceptions.schemas import ExceptionModel
-import schemas
 import models
-from sdk.exceptions import FieldError
-from api import deps
+import schemas
 import services
+from api import deps
 
 router = APIRouter()
 
@@ -35,7 +26,9 @@ async def get_all_groups(
 ) -> List[schemas.Group]:
     """Получить все группы"""
 
-    groups = await models.Group.filter(is_archived=is_archived).all().select_related('course').prefetch_related('teachers', 'students', 'teachers__user')
+    groups = await models.Group.filter(is_archived=is_archived).all()\
+        .select_related('course')\
+        .prefetch_related('teachers', 'students', 'teachers__user')
     return schemas.Group.from_queryset(groups)
 
 
@@ -51,7 +44,9 @@ async def get_all_groups(
 ) -> schemas.GroupDetail:
     """Получить конкретную группу"""
 
-    group = await models.Group.get(uuid=group_id).select_related('course').prefetch_related('teachers', 'students', 'students__user', 'teachers__user')
+    group = await models.Group.get(uuid=group_id)\
+        .select_related('course')\
+        .prefetch_related('teachers', 'students', 'students__user', 'teachers__user')
     return schemas.GroupDetail.from_orm(group)
 
 

@@ -1,24 +1,14 @@
-from datetime import timedelta
-from typing import List, Union
+from typing import List
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, Body
+from fastapi import status
 from starlette.responses import Response
-from tortoise.exceptions import DoesNotExist
-from tortoise.transactions import atomic
 
 import enums
-from core import security
-from core.config import settings
-from fastapi import APIRouter, Depends, Body, HTTPException, Query
-from fastapi import status
-
-from exceptions import ValidationError
-from exceptions.schemas import ExceptionModel
-import schemas
 import models
-from sdk.exceptions import FieldError
+import schemas
 from api import deps
-import services
 
 router = APIRouter()
 
